@@ -11,6 +11,7 @@ import com.beust.jcommander.ParameterException;
 
 public class CommandLineArguments {
 	private static final String OPT = "--";
+	private static final String TRUST_CONTRACT_ARG = "contractAddress";
 	private static final String TRUST_ARG = "trust";
 	private static final String REVOKE_ARG = "revoke";
 	private static final String PUBLICKEY_ARG = "pubkey";
@@ -18,6 +19,8 @@ public class CommandLineArguments {
 
 	@Parameter(names = OPT + TRUST_ARG)
 	private String trust;
+	@Parameter(names = OPT + TRUST_CONTRACT_ARG)
+	private String contract;
 	@Parameter(names = OPT + REVOKE_ARG)
 	private String revoke;
 	@Parameter(names = OPT + PUBLICKEY_ARG)
@@ -60,19 +63,18 @@ public class CommandLineArguments {
 
 	public void validateArgs() {
 		try {
-			if (trust != null && revoke != null || trust == null && revoke == null) {
+			if (contract == null || trust != null && revoke != null || trust == null && revoke == null) {
 				isValidateArgs = false;
 			} else {
-				String digest = trust != null ? trust : revoke;
+				String digest = contract;
+				digest += trust != null ? trust : revoke;
 				digest = Util.convertHexToBase64String(digest);
 				byte[] target = String.format("%s%s", this.getType(), digest).getBytes(StandardCharsets.UTF_8);
 				//System.out.println("target:" + target.toString());
 				byte[] h_digest = Hash.sha3(target);
 				//System.out.println("h_digest:" + h_digest.toString());
 				//System.out.println("encodeHexString:" + Util.convertByteArrayToHex(h_digest));
-
 				this.digestBI = new BigInteger(Util.convertByteArrayToHex(h_digest), 16);
-
 				isValidateArgs = true;
 			}
 		} catch (Exception ex) {
@@ -84,7 +86,6 @@ public class CommandLineArguments {
 		try {
 			final JCommander jc = new JCommander(this);
 			jc.parse(args);
-
 			validateArgs();
 		} catch (final ParameterException e) {
 			System.out.println(e.getMessage());
